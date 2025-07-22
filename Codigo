@@ -1,0 +1,95 @@
+import tkinter as tk 
+from tkinter import messagebox
+import os
+
+archivoContactos = "contactos.txt"
+contactos = []
+
+def cargarDesdeArchivo():
+    contactos.clear()
+    if os.path.exists(archivoContactos):
+        with open(archivoContactos, "r") as file:
+            for linea in file:
+                partes = linea.strip().split(" - ")
+                if len(partes) == 2:
+                    contactos.append((partes[0], partes[1]))
+    LeerContactos()
+
+def guardarEnArchivo():
+    with open(archivoContactos, "w") as file:
+        for nombre, telefono in contactos:
+            file.write(f"{nombre} - {telefono}\n")
+            
+def insertarContacto(nombre, telefono):
+    if nombre and telefono:
+        contactos.append((nombre, telefono))
+        guardarEnArchivo()
+        LeerContactos()
+        entradaNombre.delete(0, tk.END)
+        entradaTelefono.delete(0, tk.END)
+        
+    else:
+        messagebox.showwarning("Campos vacios", "Por favor ingresa nombre y telefono.")
+        
+def LeerContactos():
+    listaContactos.delete(0, tk.END)
+    for i, (nombre, telefono) in enumerate(contactos, start=1):
+        listaContactos.insert(tk.END, f"{i} - {nombre} - {telefono}")
+
+def eliminarContacto():
+    seleccionado = listaContactos.curselection()
+    if seleccionado:
+        index = seleccionado[0]
+        contactos.pop(index)
+        guardarEnArchivo()
+        LeerContactos()
+            
+    else:
+        messagebox.showwarning("Advertencia", "Selecciona un contacto para eliminar")
+
+def actualizarContacto():
+    seleccionado = listaContactos.curselection()
+    if seleccionado:
+        index = seleccionado[0]
+        nuevoNombre = entradaNombre.get()
+        nuevoTelefono = entradaTelefono.get()
+        if nuevoNombre and nuevoTelefono:
+            contactos[index] = (nuevoNombre, nuevoTelefono)
+            guardarEnArchivo()
+            LeerContactos()
+        else:
+            messagebox.showwarning("Campos Vacios", "No dejes campos vacios al actualizar")
+    else:
+        messagebox.showwarning("Advertencia", "Selecciona un contacto para actualizar")
+        
+def cargarContacto():
+    seleccionado = listaContactos.curselection()
+    if seleccionado:
+        index = seleccionado[0]
+        nombre, telefono = contactos[index]
+        entradaNombre.delete(0,tk.END)
+        entradaTelefono.delete(0, tk.END)
+        entradaNombre.insert(0, nombre)
+        entradaTelefono.insert(0, telefono)
+
+ventana = tk.Tk()
+ventana.title("Agenda de contactos (.txt)")
+
+tk.Label(ventana, text = "Nombre").grid(row=0, column = 0)
+entradaNombre = tk.Entry(ventana)
+entradaNombre.grid(row=0, column=1)
+
+tk.Label(ventana, text="Telefono").grid(row=1, column=0)
+entradaTelefono = tk.Entry(ventana)
+entradaTelefono.grid(row=1, column=1)
+
+tk.Button(ventana, text="Crear", command=lambda: insertarContacto(entradaNombre.get(), entradaTelefono.get())).grid(row=2, column=0)
+tk.Button(ventana, text="Actualizar", command=actualizarContacto).grid(row=2, column=1)
+tk.Button(ventana, text="Eliminar", command=eliminarContacto).grid(row=3, column=0)
+tk.Button(ventana, text="Leer", command=cargarContacto).grid(row=3, column=1)
+
+listaContactos = tk.Listbox(ventana, width=40)
+listaContactos.grid(row=4, column=0, columnspan=2)
+
+cargarDesdeArchivo()
+ventana.mainloop()
